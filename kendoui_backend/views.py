@@ -7,6 +7,7 @@ from django.db.models import Q
 class KendoListProviderView(ListView):
 	def _build_filters(self, filters):
 		django_filters = dict()
+		
 		for filter_id in filters:
 			filter = filters[filter_id]
 			if(filter.has_key('field') and filter.has_key('operator') and filter.has_key('value')):
@@ -18,15 +19,14 @@ class KendoListProviderView(ListView):
 
 	def _build_sorts(self, sorts):
 		django_sorts = list()
-		# sort = request.GET.get('sort[0][field]')
-		# sortorder = request.GET.get('sort[0][dir]')
-		# if(sort):
-		# 	sort = sort.replace('fields.', '')
-		# 	if(sortorder and sortorder == 'desc'):
-		# 		sort = '-'+sort
-		# 	logging.debug(sort)
-		# 	logging.debug(sortorder)
-		# for sort in sorts:
+
+		for sort_id in sorts:
+			sort = sorts[sort_id]
+			if(sort.has_key('field') and sort.has_key('dir')):
+				if(sort['dir'].lower() == 'desc'):
+					django_sorts.append('-%s' % sort['field'])
+				else:
+					django_sorts.append(sort['field'])
 		if(len(django_sorts) == 0):
 			django_sorts.append('id')
 		return django_sorts
