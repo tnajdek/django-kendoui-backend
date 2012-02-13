@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Kendo UI backed for Django - Example</title>
+<!--[if IE]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<link href="http://cdn.kendostatic.com/2011.3.1407/styles/kendo.common.min.css" rel="stylesheet" />
+<link href="http://cdn.kendostatic.com/2011.3.1407/styles/kendo.default.min.css" rel="stylesheet" />
+
+<style>
+  article, aside, figure, footer, header, hgroup, 
+  menu, nav, section { display: block; }
+  .k-autocomplete {
+	min-width:400px;
+  }
+
+</style>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="http://cdn.kendostatic.com/2011.3.1407/js/kendo.all.min.js"></script>
+</head>
+<body>
+	<textarea type="text" id="autosuggest" ></textarea>
+	<hr />
+	<div id="dropdown"></div>
+	<hr />
+	<div id="grid"></div>
+	<script>
+	   $(document).ready(function () {
+
+		var dataSourceArguments = {
+				pageSize: 20,
+				serverPaging: true,
+				serverFiltering: true,
+				serverSorting: true,
+				transport: {
+					read: {
+						url: "{% url example_model %}",
+						dataType: "json",
+					}
+				},
+				schema: {
+					total: "count",
+					data: function(d) {return d['payload'].map(function(e) {return e['fields']})}
+				}
+			}
+
+		var ds1 = new kendo.data.DataSource(dataSourceArguments);
+
+			$("#autosuggest").kendoAutoComplete({
+					dataSource: ds1,
+					minLength: 2,
+					dataTextField: 'name',
+					filter: "startswith",
+					placeholder: "Start typing...",
+					separator: ", "
+			});
+
+		var ds2 = new kendo.data.DataSource(dataSourceArguments);
+
+			 $("#grid").kendoGrid({
+				dataSource: ds2,
+				height: 600,
+				groupable: true,
+				scrollable: true,
+				sortable: true,
+				pageable: true,
+				columns: [ {
+						field: "name",
+						width: 90,
+						title: "Example name"
+					},
+					{
+						field: "number",
+						width: 90,
+						title: "Example number"
+					},
+					{
+						field: "description",
+						width: 90,
+						title: "Example description"
+					},
+
+					]
+			});
+
+		var ds3 = new kendo.data.DataSource(dataSourceArguments);
+		$("#dropdown").kendoDropDownList({
+				dataTextField: "name",
+				dataValueField: "number",
+				dataSource: ds3,
+				index: 0,
+			});
+		});
+	</script>
+</body>
+</html>

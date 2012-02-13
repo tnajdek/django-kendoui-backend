@@ -12,7 +12,7 @@ class DummyModel(models.Model):
 	description = models.TextField()
 
 	def __unicode__(self):
-		return self.title
+		return self.name
 
 
 class KendoUITest(TestCase):
