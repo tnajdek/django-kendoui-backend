@@ -21,58 +21,54 @@ or
 
 or (reqiuires you to solve dependencies first)
 
-`
-$ git clone git://github.com/omab/django-kendoui-backend.git
-$ export PYTHONPATH=$PYTHONPATH:$(pwd)/django-kendoui-backend/
-`
+`$ git clone git://github.com/omab/django-kendoui-backend.git`
+`$ export PYTHONPATH=$PYTHONPATH:$(pwd)/django-kendoui-backend/`
+
 
 or (reqiuires you to solve dependencies first)
 
-`
-$ git clone git://github.com/omab/django-kendoui-backend.git
-$ cd django-kendoui-backend
-$ sudo python setup.py install
-`
+`$ git clone git://github.com/omab/django-kendoui-backend.git`
+`$ cd django-kendoui-backend`
+`$ sudo python setup.py install`
 
 ## Usage
 
 * Add to urls.py:
-    `
-    from kendoui_backend.views import KendoListProviderView
-    url(r'^example_model$', KendoListProviderView.as_view(model=ExampleModel), name='example_model'),
-    `
+    
+    `from kendoui_backend.views import KendoListProviderView`
+    `url(r'^example_model$', KendoListProviderView.as_view(model=ExampleModel), name='example_model'),`
 
 * Feed your Kendo UI component with data source, e.g.:
 
-    `
-    var ds = new kendo.data.DataSource({
-        pageSize: 20,
-        serverPaging: true,
-        serverFiltering: true,
-        serverSorting: true,
-        transport: {
-            read: {
-                url: "{% url example_model %}",
-                dataType: "json",
-            }
-        },
-        schema: {
-            total: "count",
-            data: function(d) {return d['payload'].map(function(e) {return e['fields']})} // This bit is required for Kendo UI to navigate through data set received from the server correctly
-        }
-    }
-    `
+    
+`    var ds = new kendo.data.DataSource({`
+`        pageSize: 20,`
+`        serverPaging: true,`
+`        serverFiltering: true,`
+`        serverSorting: true,`
+`        transport: {`
+`            read: {`
+`                url: "{% url example_model %}",`
+`                dataType: "json",`
+`            }`
+`        },`
+`        schema: {`
+`            total: "count",`
+`            data: function(d) {return d['payload'].map(function(e) {return e['fields']})} // This bit is required for Kendo UI to navigate through data set received from the server correctly`
+`        }`
+`    }`
+    
 
 * Create a Kendo UI component with a DataSource created in above step:
     
-    `
-    $("#dropdown").kendoDropDownList({
-        dataTextField: "name",
-        dataValueField: "number",
-        dataSource: ds3,
-        index: 0,
-    });
-    `
+    
+`    $("#dropdown").kendoDropDownList({`
+`        dataTextField: "name",`
+`        dataValueField: "number",`
+`        dataSource: ds3,`
+`        index: 0,`
+`    });`
+    
 
 
 For more details see the example app
