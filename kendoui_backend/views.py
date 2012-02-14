@@ -5,7 +5,7 @@ from django.core.exceptions import FieldError
 from django.db.models import Q
 
 class KendoListProviderView(ListView):
-	def _build_filters(self, filters, django_filters=()):
+	def _build_filters(self, filters, django_filters):
 		
 		for filter_id in filters:
 			filter = filters[filter_id]
@@ -16,7 +16,7 @@ class KendoListProviderView(ListView):
 				django_filters[filter['field']+'__'+filter['operator']] = filter['value']
 		return django_filters
 
-	def _build_sorts(self, sorts, django_sorts=list(), append_default_sorting=True):
+	def _build_sorts(self, sorts, django_sorts, append_default_sorting=True):
 		for sort_id in sorts:
 			sort = sorts[sort_id]
 			if(sort.has_key('field') and sort.has_key('dir')):
@@ -28,12 +28,13 @@ class KendoListProviderView(ListView):
 			django_sorts.append('id')
 		return django_sorts
 
-	def _build_groups(self, groups, django_groups=list()):
+	def _build_groups(self, groups, django_groups):
 		return self._build_sorts(groups, django_groups, False)
 		
 
 	def get(self, request, **kwargs):
-		arguments = parser.parse(request.GET.urlencode())		
+		arguments = parser.parse(request.GET.urlencode())
+		print arguments
 
 		take = arguments.get('take', 10)
 		skip = arguments.get('skip', 0)
@@ -43,15 +44,16 @@ class KendoListProviderView(ListView):
 		filter_logic = 'and'
 
 		if(arguments.has_key('filter') and arguments['filter'].has_key('filters')):
-			filter_arg = self._build_filters(arguments['filter']['filters'])
+			filter_arg = self._build_filters(arguments['filter']['filters'], filter_arg)
 			filter_logic = arguments['filter']['logic'].upper()
 
 		if(arguments.has_key('group')):
-			sort_arg = self._build_sorts(arguments['group'])
+			sort_arg = self._build_sorts(arguments['group'], sort_arg)
 
 		if(arguments.has_key('sort')):
 			sort_arg = self._build_sorts(arguments['sort'], sort_arg)
 		
+		print sort_arg
 		output = dict()
 
 		try:
