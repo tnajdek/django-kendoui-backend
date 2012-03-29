@@ -8,7 +8,7 @@ Provides a generic view that will feed Kendo UI (http://kendoui.com) components 
 
 * Django >=1.3.0
 * json_utils >=0.2
-* querystring_parser>=1.0
+* querystring_parser>=1.1
 
 
 ##Installation

@@ -5,6 +5,7 @@ from kendoui_backend.views import KendoListProviderView
 import string
 import random
 import json
+from querystring_parser import builder
 
 class DummyModel(models.Model):
 	name = models.CharField(max_length=128)
@@ -15,11 +16,16 @@ class DummyModel(models.Model):
 		return self.name
 
 
+class DummyRelatedModel(models.Model):
+	name = models.CharField(max_length=128)
+	related = models.ForeignKey(DummyModel)
+
 class KendoUITest(TestCase):
 	
 	def setUp(self):
 		self.factory = RequestFactory()
 		self.view = KendoListProviderView.as_view(model=DummyModel)
+		self.view2 = KendoListProviderView.as_view(model=DummyRelatedModel)
 	
 	def test_empty(self):
 		"""
@@ -45,9 +51,25 @@ class KendoUITest(TestCase):
 			description="Some Dummy Description"
 		)
 
-		#Take up to 5 items, filter dataset for results where name starts with '1du'
+		querystring_data = {
+			"take": 5,
+			"skip": 0,
+			"page": 1,
+			"pageSize": 5,
+			"filter": {
+				"logic": "and",
+				"filters": [
+					{
+						"field": "name",
+						"operator": "startswith",
+						"value": "1du"
+					}
+				]
+			}
+		}
+
 		request = self.factory.get(
-			'/?take=5&skip=0&page=1&pageSize=5&filter[logic]=and&filter[filters][0][field]=name&filter[filters][0][operator]=startswith&filter[filters][0][value]=1du',
+			"/?%s" % builder.build(querystring_data),
 			HTTP_ACCEPT_ENCODING='application/json'
 		)
 
@@ -60,6 +82,57 @@ class KendoUITest(TestCase):
 		for item in json_response['payload']:
 				self.assertEqual(item['fields']['name'].lower()[:3], '1du')
 
+	def test_filter_with_related(self):
+		"""
+		Test if data provider can correctly handle filters on keys on related models
+		"""
+
+		for i in range(10):
+			DummyModel.objects.create(
+			name="dummy %i" % i,
+			number = i,
+			description="Some Dummy Description"
+		)
+
+		DummyRelatedModel.objects.create(
+			name = "needle",
+			related = DummyModel.objects.get(number=8)
+		)
+
+		DummyRelatedModel.objects.create(
+			name = "garbage",
+			related = DummyModel.objects.get(number=1)
+		)
+
+		querystring_data = {
+			'take': 5,
+			'skip': 0,
+			'page': 1,
+			'pageSize': 5,
+			'filter': {
+				'logic': 'or',
+				'filters': [
+					{
+					'field': 'related.number',
+					'operator': 'eq',
+					'value': 8
+					}
+				]
+			}
+		}
+
+		request = self.factory.get(
+			"/?%s" % builder.build(querystring_data),
+			HTTP_ACCEPT_ENCODING='application/json'
+		)
+
+		response = self.view2(request)
+		json_response = json.loads(response.content)
+
+		self.assertEquals(json_response['result'], 1)
+		self.assertLessEqual(len(json_response['payload']), 1)
+		self.assertEquals(json_response['payload'][0]['fields']['name'], 'needle')
+
 	def test_filter_with_or_logic(self):	
 		"""
 		Test if data provider correctly applies OR filters
@@ -71,9 +144,22 @@ class KendoUITest(TestCase):
 			description="Some Dummy Description"
 		)
 
-		#Take up to 5 items, filter dataset for results where name start with "1du" or number is greater than 8
+		querystring_data = {
+			'skip': 0, 
+			'take': 5, 
+			'pageSize': 5, 
+			'page': 1,
+			'filter': {
+				'logic': 'or',
+				'filters': [
+					{'operator': 'startswith', 'field': 'name', 'value': '1du'},
+					{'operator': 'gt', 'field': 'number', 'value': 8}
+				]
+			}
+		}
+
 		request = self.factory.get(
-			'/?take=5&skip=0&page=1&pageSize=5&filter[logic]=or&filter[filters][0][field]=name&filter[filters][0][operator]=startswith&filter[filters][0][value]=1du&filter[filters][1][field]=number&filter[filters][1][operator]=gt&filter[filters][1][value]=8',
+			"/?%s" % builder.build(querystring_data),
 			HTTP_ACCEPT_ENCODING='application/json'
 		)
 
@@ -102,10 +188,19 @@ class KendoUITest(TestCase):
 			number = i,
 			description="Some Dummy Description"
 		)
+
+		querystring_data = {
+			'skip': 0,
+			'take': 5,
+			'pageSize': 5,
+			'page': 1,
+			'sort': [
+				{'field': 'name', 'dir': 'asc'},
+			]
+		}
 		
-		#Take 5 items and sort them by name ascending
 		request = self.factory.get(
-			'/?take=5&skip=0&page=1&pageSize=5&sort[0][field]=name&sort[0][dir]=asc',
+			"/?%s" % builder.build(querystring_data),
 			HTTP_ACCEPT_ENCODING='application/json'
 		)
 
