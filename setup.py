@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(	name='django-kendoui-backend',
-		version='0.2',
+		version='0.3',
 		description='Kendo UI DataSource backend',
 		author='Tom Najdek',
 		author_email='tom@doppnet.com',
