@@ -61,7 +61,7 @@ class KendoListProviderView(ListView):
 			filters = Q(**filter_arg)
 			filters.connector = filter_logic
 			self.queryset = self.model.objects.filter(filters).order_by(*sort_arg)[skip:total]
-			output = {'result':1, 'count':self.model.objects.count(), 'payload':self.get_queryset()}
+			output = {'result':1, 'count':self.model.objects.filter(filters).count(), 'payload':self.get_queryset()}
 		except FieldError:
 			output = {'result':0, 'error':'Invalid request. Tried to filter or sort using invalid field.'}
 

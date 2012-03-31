@@ -38,6 +38,8 @@ class KendoUITest(TestCase):
 		json_response = json.loads(response.content)
 		self.assertEquals(json_response['result'], 1)
 		self.assertTrue(json_response.has_key('payload'))
+		self.assertTrue(json_response.has_key('count'))
+		self.assertEquals(json_response['count'], 0)
 		self.assertEqual(len(json_response['payload']), 0)
 
 	def test_filter_simple(self):
@@ -77,6 +79,8 @@ class KendoUITest(TestCase):
 		json_response = json.loads(response.content)
 		self.assertEquals(json_response['result'], 1)
 		self.assertTrue(json_response.has_key('payload'))
+		self.assertTrue(json_response.has_key('count'))
+		self.assertEquals(json_response['count'], 3) # i = 1,4,7
 		self.assertLessEqual(len(json_response['payload']), 5)
 
 		for item in json_response['payload']:
@@ -131,6 +135,8 @@ class KendoUITest(TestCase):
 
 		self.assertEquals(json_response['result'], 1)
 		self.assertLessEqual(len(json_response['payload']), 1)
+		self.assertTrue(json_response.has_key('count'))
+		self.assertEquals(json_response['count'], 1)
 		self.assertEquals(json_response['payload'][0]['fields']['name'], 'needle')
 
 	def test_filter_with_or_logic(self):	
@@ -153,7 +159,7 @@ class KendoUITest(TestCase):
 				'logic': 'or',
 				'filters': [
 					{'operator': 'startswith', 'field': 'name', 'value': '1du'},
-					{'operator': 'gt', 'field': 'number', 'value': 8}
+					{'operator': 'gt', 'field': 'number', 'value': 7}
 				]
 			}
 		}
@@ -167,14 +173,57 @@ class KendoUITest(TestCase):
 		json_response = json.loads(response.content)
 		self.assertEquals(json_response['result'], 1)
 		self.assertLessEqual(len(json_response['payload']), 5)
+		self.assertTrue(json_response.has_key('count'))
+		self.assertEquals(json_response['count'], 4) # i= 1,6, 8, 9
 
 		for item in json_response['payload']:
 			if(item['fields']['name'].lower()[:3] == '1du'):
 				self.assertEqual(item['fields']['name'].lower()[:3], '1du')
-			elif(item['fields']['number']>8):
-				self.assertGreater(item['fields']['number'], 8)
+			elif(item['fields']['number']>7):
+				self.assertGreater(item['fields']['number'], 7)
 			else:
 				self.fail()
+
+	def test_count(self):
+		"""
+		Tests if data provider correctly returns total number of matches found
+		"""
+		for i in range(100):
+			DummyModel.objects.create(
+			name="%idummy" % (i%3),
+			number = i,
+			description="Some Dummy Description"
+		)
+
+		querystring_data = {
+			"take": 10,
+			"skip": 0,
+			"page": 1,
+			"pageSize": 10,
+			"filter": {
+				"logic": "and",
+				"filters": [
+					{
+						"field": "name",
+						"operator": "startswith",
+						"value": "1du"
+					}
+				]
+			}
+		}
+
+
+		request = self.factory.get(
+			"/?%s" % builder.build(querystring_data),
+			HTTP_ACCEPT_ENCODING='application/json'
+		)
+
+		response = self.view(request)
+		json_response = json.loads(response.content)
+		self.assertEquals(json_response['result'], 1)
+		self.assertEquals(len(json_response['payload']), 10)
+		self.assertTrue(json_response.has_key('count'))
+		self.assertEquals(json_response['count'], 33)
 
 
 	def test_sort(self):
