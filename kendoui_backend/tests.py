@@ -1,4 +1,5 @@
 from django.test import TestCase
+from unittest import skipIf
 from django.test.client import RequestFactory
 from django.db import models
 from kendoui_backend.views import KendoListProviderView
@@ -6,6 +7,7 @@ import string
 import random
 import json
 from querystring_parser import builder
+from django.conf import settings
 
 class DummyModel(models.Model):
 	name = models.CharField(max_length=128)
@@ -24,8 +26,9 @@ class KendoUITest(TestCase):
 	
 	def setUp(self):
 		self.factory = RequestFactory()
-		self.view = KendoListProviderView.as_view(model=DummyModel)
-		self.view2 = KendoListProviderView.as_view(model=DummyRelatedModel)
+		self.view = KendoListProviderView.as_view(model=DummyModel, filters_ci=True)
+		self.view2 = KendoListProviderView.as_view(model=DummyRelatedModel, filters_ci=True)
+		self.view3 = KendoListProviderView.as_view(model=DummyModel, filters_ci=False)
 	
 	def test_empty(self):
 		"""
@@ -265,3 +268,48 @@ class KendoUITest(TestCase):
 			if(last_item):
 				self.assertGreaterEqual(item['fields']['name'], last_item)
 			last_item = item['fields']['name']
+
+	@skipIf(settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3', "SQLITE can't support case-sensitive LIKE")
+	def test_filter_cs(self):
+		"""
+		Test if data provider correctly understands case-insensitive filters
+		"""
+		for i in range(10):
+			DummyModel.objects.create(
+			name="dummy%i" % i,
+			number = i,
+			description = "aa DoPPler aa" if i % 3 == 1 else "aa doppler aa"
+		)
+
+		querystring_data = {
+			"take": 5,
+			"skip": 0,
+			"page": 1,
+			"pageSize": 5,
+			"filter": {
+				"logic": "and",
+				"filters": [
+					{
+						"field": "description",
+						"operator": "contains",
+						"value": "DoPPler"
+					}
+				]
+			}
+		}
+
+		request = self.factory.get(
+			"/?%s" % builder.build(querystring_data),
+			HTTP_ACCEPT_ENCODING='application/json'
+		)
+
+		response = self.view3(request)
+		json_response = json.loads(response.content)
+		self.assertEquals(json_response['result'], 1)
+		self.assertTrue(json_response.has_key('payload'))
+		self.assertTrue(json_response.has_key('count'))
+		self.assertEquals(json_response['count'], 3) # i = 1,4,7
+		self.assertEquals(len(json_response['payload']), 3)
+
+		for item in json_response['payload']:
+			self.assertEqual(item['fields']['description'], 'aa DoPPler aa')

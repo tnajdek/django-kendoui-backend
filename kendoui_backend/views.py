@@ -5,11 +5,13 @@ from django.core.exceptions import FieldError
 from django.db.models import Q
 
 class KendoListProviderView(ListView):
+	filters_ci = True
+
 	def _build_filters(self, filters, django_filters):
 		for filter_id in filters:
 			filter = filters[filter_id]
 			if(filter.has_key('field') and filter.has_key('operator') and filter.has_key('value')):
-				if(filter['operator'] == 'startswith' or filter['operator'] == 'endswith'):
+				if(self.filters_ci and (filter['operator'] == 'startswith' or filter['operator'] == 'endswith' or filter['operator'] == 'contains')):
 					filter['operator'] = 'i'+filter['operator']
 
 				if "." in filter['field']:
