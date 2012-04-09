@@ -17,6 +17,8 @@ class KendoListProviderView(ListView):
 				if "." in filter['field']:
 					filter['field'] = filter['field'].replace('.', '__')
 					django_filters[filter['field']] = filter['value']
+				elif(filter['operator'] == 'eq'):
+					django_filters[filter['field']] = filter['value']
 				else:
 					django_filters[filter['field']+'__'+filter['operator']] = filter['value']
 		return django_filters
