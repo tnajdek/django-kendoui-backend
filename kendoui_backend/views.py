@@ -6,6 +6,7 @@ from django.db.models import Q
 
 class KendoListProviderView(ListView):
 	filters_ci = True
+	distinct = False
 
 	def _build_filters(self, filters, django_filters):
 		for filter_id in filters:
@@ -13,7 +14,7 @@ class KendoListProviderView(ListView):
 			if(filter.has_key('field') and filter.has_key('operator') and filter.has_key('value')):
 				if(self.filters_ci and (filter['operator'] == 'startswith' or filter['operator'] == 'endswith' or filter['operator'] == 'contains')):
 					filter['operator'] = 'i'+filter['operator']
-
+					
 				if "." in filter['field']:
 					filter['field'] = filter['field'].replace('.', '__')
 					django_filters[filter['field']] = filter['value']
@@ -64,8 +65,11 @@ class KendoListProviderView(ListView):
 		try:
 			filters = Q(**filter_arg)
 			filters.connector = filter_logic
-			self.queryset = self.model.objects.filter(filters).order_by(*sort_arg)[skip:total]
-			output = {'result':1, 'count':self.model.objects.filter(filters).count(), 'payload':self.get_queryset()}
+			items = self.model.objects.filter(filters).order_by(*sort_arg)
+			if(self.distinct):
+				items = items.distinct()
+			self.queryset = items[skip:total]
+			output = {'result':1, 'count':self.queryset.count(), 'payload':self.get_queryset()}
 		except FieldError:
 			output = {'result':0, 'error':'Invalid request. Tried to filter or sort using invalid field.'}
 
