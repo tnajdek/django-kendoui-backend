@@ -69,7 +69,7 @@ class KendoListProviderView(ListView):
 			if(self.distinct):
 				items = items.distinct()
 			self.queryset = items[skip:total]
-			output = {'result':1, 'count':self.queryset.count(), 'payload':self.get_queryset()}
+			output = {'result':1, 'count':items.count(), 'payload':self.get_queryset()}
 		except FieldError:
 			output = {'result':0, 'error':'Invalid request. Tried to filter or sort using invalid field.'}
 
