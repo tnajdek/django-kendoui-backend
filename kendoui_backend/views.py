@@ -2,7 +2,7 @@ from django.views.generic import ListView
 from django.http import JsonResponse
 from querystring_parser import parser
 from django.core.exceptions import FieldError
-
+from django.db.models import Q
 
 class KendoListProviderView(ListView):
 	filters_ci = True
@@ -14,7 +14,7 @@ class KendoListProviderView(ListView):
 			if(('field' in filter) and ('operator' in filter) and ('value' in filter)):
 				if(self.filters_ci and (filter['operator'] == 'startswith' or filter['operator'] == 'endswith' or filter['operator'] == 'contains')):
 					filter['operator'] = 'i' + filter['operator']
-					
+
 				if "." in filter['field']:
 					filter['field'] = filter['field'].replace('.', '__')
 					django_filters[filter['field']] = filter['value']
@@ -38,7 +38,7 @@ class KendoListProviderView(ListView):
 
 	def _build_groups(self, groups, django_groups):
 		return self._build_sorts(groups, django_groups, False)
-		
+
 
 	def get(self, request, **kwargs):
 		arguments = parser.parse(request.GET.urlencode())
@@ -75,4 +75,4 @@ class KendoListProviderView(ListView):
 		except FieldError:
 			output = {'success': False, 'Data':'', 'error':'Invalid request. Tried to filter or sort using invalid field.'}
 
-		return JsonResponse(output,  safe=False)
+		return JsonResponse(output)
