@@ -1,8 +1,8 @@
 from django.views.generic import ListView
-from json_utils.shortcuts import response_json
+from django.http import JsonResponse
 from querystring_parser import parser
 from django.core.exceptions import FieldError
-from django.db.models import Q
+
 
 class KendoListProviderView(ListView):
 	filters_ci = True
@@ -11,9 +11,9 @@ class KendoListProviderView(ListView):
 	def _build_filters(self, filters, django_filters):
 		for filter_id in filters:
 			filter = filters[filter_id]
-			if(filter.has_key('field') and filter.has_key('operator') and filter.has_key('value')):
+			if(('field' in filter) and ('operator' in filter) and ('value' in filter)):
 				if(self.filters_ci and (filter['operator'] == 'startswith' or filter['operator'] == 'endswith' or filter['operator'] == 'contains')):
-					filter['operator'] = 'i'+filter['operator']
+					filter['operator'] = 'i' + filter['operator']
 					
 				if "." in filter['field']:
 					filter['field'] = filter['field'].replace('.', '__')
@@ -21,13 +21,13 @@ class KendoListProviderView(ListView):
 				elif(filter['operator'] == 'eq'):
 					django_filters[filter['field']] = filter['value']
 				else:
-					django_filters[filter['field']+'__'+filter['operator']] = filter['value']
+					django_filters[filter['field'] + '__' + filter['operator']] = filter['value']
 		return django_filters
 
 	def _build_sorts(self, sorts, django_sorts, append_default_sorting=True):
 		for sort_id in sorts:
 			sort = sorts[sort_id]
-			if(sort.has_key('field') and sort.has_key('dir')):
+			if(('field' in sort) and ('dir' in sort)):
 				if(sort['dir'].lower() == 'desc'):
 					django_sorts.append('-%s' % sort['field'])
 				else:
@@ -43,21 +43,21 @@ class KendoListProviderView(ListView):
 	def get(self, request, **kwargs):
 		arguments = parser.parse(request.GET.urlencode())
 
-		take = arguments.get('take', 10)
-		skip = arguments.get('skip', 0)
-		total = skip+take
+		take = int(arguments.get('take', 10))
+		skip = int(arguments.get('skip', 0))
+		total = skip + take
 		filter_arg = dict()
 		sort_arg = list()
 		filter_logic = 'and'
 
-		if(arguments.has_key('filter') and arguments['filter'].has_key('filters')):
+		if(("filter" in arguments) and ('filters' in arguments['filter'])):
 			filter_arg = self._build_filters(arguments['filter']['filters'], filter_arg)
 			filter_logic = arguments['filter']['logic'].upper()
 
-		if(arguments.has_key('group')):
+		if('group' in arguments):
 			sort_arg = self._build_sorts(arguments['group'], sort_arg)
 
-		if(arguments.has_key('sort')):
+		if('sort' in arguments):
 			sort_arg = self._build_sorts(arguments['sort'], sort_arg)
 
 		output = dict()
@@ -66,12 +66,13 @@ class KendoListProviderView(ListView):
 			filters = Q(**filter_arg)
 			filters.connector = filter_logic
 			items = self.model.objects.filter(filters).order_by(*sort_arg)
+
+
 			if(self.distinct):
 				items = items.distinct()
 			self.queryset = items[skip:total]
-			output = {'result':1, 'count':items.count(), 'payload':self.get_queryset()}
+			output = {'success':True, 'Aggregates':{},'Total':items.count(), 'Data' : list(self.get_queryset().values())}
 		except FieldError:
-			output = {'result':0, 'error':'Invalid request. Tried to filter or sort using invalid field.'}
+			output = {'success': False, 'Data':'', 'error':'Invalid request. Tried to filter or sort using invalid field.'}
 
-		return response_json(request, output)
- 
+		return JsonResponse(output,  safe=False)
