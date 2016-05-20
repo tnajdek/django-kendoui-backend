@@ -2,13 +2,13 @@
 
 ##Description
 
-Provides a generic view that will feed Kendo UI (http://kendoui.com) components with model data. Supports server-side pagin, filtering, sorting and grouping. 
+Provides a generic view that will feed Kendo UI (http://kendoui.com) components with model data. Supports server-side pagin, filtering, sorting and grouping.
 
-##Requirements 
+##Requirements
 
-* Django >=1.3.0
-* json_utils >=0.2
-* querystring_parser>=1.1
+* Django >=1.9.0
+* querystring_parser>=1.2.3
+* six>=1.10.0
 
 
 ##Installation
@@ -34,14 +34,14 @@ or (reqiuires you to solve dependencies first)
 ## Usage
 
 * Add to urls.py:
-    
+
         from kendoui_backend.views import KendoListProviderView
         url(r'^example_model$', KendoListProviderView.as_view(model=ExampleModel), name='example_model'),
-    
+
 
 * Feed your Kendo UI component with data source, e.g.:
 
-    
+
         var ds = new kendo.data.DataSource({
             pageSize: 20,
             serverPaging: true,
@@ -58,22 +58,21 @@ or (reqiuires you to solve dependencies first)
                 data: function(d) {return d['payload'].map(function(e) {return e['fields']})} // This bit is required for Kendo UI to navigate through data set received from the server correctly
             }
         }
-    
+
 
 * Create a Kendo UI component with a DataSource created in above step:
-    
-    
+
+
         $("#dropdown").kendoDropDownList({
             dataTextField: "name",
             dataValueField: "number",
             dataSource: ds3,
             index: 0,
         });
-    
+
 
 
 For more details see the example app
 
 ## License
 This code is released under MIT License.
-
