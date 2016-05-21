@@ -8,11 +8,11 @@ setup(	name='django-kendoui-backend',
 		author='Tom Najdek',
 		author_email='tom@doppnet.com',
 		license='MIT',
-		url='https://github.com/tnajdek/django-kendoui-backend',
+		url='https://github.com/irwebuniq/django-kendoui-backend',
 		packages=['kendoui_backend'],
 		install_requires=[
-			'django>=1.3.0',
-			'json_utils>=0.2',
-			'querystring_parser>=1.1'
+			'django>=1.9.0',
+			'querystring_parser>=1.2.3',
+			'six>=1.10.0'
 		],
 )
