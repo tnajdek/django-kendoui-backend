@@ -19,13 +19,13 @@ or
 
     $ easy_install django-kendoui-backend
 
-or (reqiuires you to solve dependencies first)
+or (requires you to solve dependencies first)
 
     $ git clone git://github.com/irwebuniq/django-kendoui-backend.git
     $ export PYTHONPATH=$PYTHONPATH:$(pwd)/django-kendoui-backend/
 
 
-or (reqiuires you to solve dependencies first)
+or (requires you to solve dependencies first)
 
     $ git clone git://github.com/irwebuniq/django-kendoui-backend.git
     $ cd django-kendoui-backend
